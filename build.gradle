@@ -1060,6 +1060,8 @@ project(':iceberg-open-api') {
     testFixturesImplementation project(':iceberg-gcp')
     testFixturesImplementation project(':iceberg-bigquery')
     testFixturesImplementation project(':iceberg-azure')
+    implementation libs.hadoop3.common
+    implementation libs.hadoop3.hdfs.client
     testFixturesImplementation(libs.hadoop3.common) {
       exclude group: 'org.slf4j'
       exclude group: 'ch.qos.reload4j'
@@ -1085,7 +1087,7 @@ project(':iceberg-open-api') {
     testFixturesImplementation libs.junit.jupiter
 
     testFixturesImplementation libs.slf4j.api
-    testFixturesImplementation libs.slf4j.simple
+    testFixturesImplementation 'ch.qos.logback:logback-classic:1.4.11'
 
     testFixturesImplementation libs.jetty.servlet
     testFixturesImplementation libs.jetty.server
@@ -1125,6 +1127,7 @@ project(':iceberg-open-api') {
     archiveClassifier.set(null)
     configurations = [project.configurations.testFixturesRuntimeClasspath]
     from sourceSets.testFixtures.output
+    mergeServiceFiles()
     zip64 true
 
     // include the LICENSE and NOTICE files for the runtime Jar
