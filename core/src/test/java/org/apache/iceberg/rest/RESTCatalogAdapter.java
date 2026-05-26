@@ -22,11 +22,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 import java.util.stream.Collectors;
 import org.apache.http.HttpHeaders;
 import org.apache.iceberg.BaseTable;
@@ -158,6 +161,27 @@ public class RESTCatalogAdapter extends BaseHTTPClient {
     return this;
   }
 
+  private Stream<Map.Entry<String, String>> filterAndStrip(Collection<Map.Entry<String, String>> entries, String prefix) {
+    return entries.stream()
+          .filter(e -> e.getKey().startsWith(prefix))
+          .map(entry -> Map.entry(entry.getKey().substring(prefix.length()), entry.getValue()));
+  }
+  
+  private Map<String, String> convertEnvToConfMap(Stream<Map.Entry<String, String>> stream) {
+    return stream
+      .collect(
+        Collectors.toMap(
+          e -> e.getKey()
+                  .replaceAll("__", "-")
+                  .replaceAll("_", ".")
+                  .toLowerCase(Locale.ROOT),
+          Map.Entry::getValue,
+          (m1, m2) -> {
+            throw new IllegalArgumentException("Duplicate key: " + m1);
+          },
+          HashMap::new));
+  }
+
   @SuppressWarnings({"MethodLength", "checkstyle:CyclomaticComplexity"})
   public <T extends RESTResponse> T handleRequest(
       Route route,
@@ -171,6 +195,7 @@ public class RESTCatalogAdapter extends BaseHTTPClient {
         return castResponse(responseType, handleOAuthRequest(body));
 
       case CONFIG:
+        List<Map.Entry<String, String>> env_map = filterAndStrip(System.getenv().entrySet(), "REST_CATALOG_CONFIG_").toList();
         return castResponse(
             responseType,
             ConfigResponse.builder()
@@ -180,6 +205,8 @@ public class RESTCatalogAdapter extends BaseHTTPClient {
                         .collect(Collectors.toList()))
                 .withOverride(
                     RESTCatalogProperties.NAMESPACE_SEPARATOR, NAMESPACE_SEPARATOR_URLENCODED_UTF_8)
+                .withOverrides(convertEnvToConfMap(filterAndStrip(env_map, "OVERRIDE_")))
+                .withDefaults(convertEnvToConfMap(filterAndStrip(env_map, "DEFAULT_")))
                 .build());
 
       case LIST_NAMESPACES:
