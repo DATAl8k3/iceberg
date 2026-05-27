@@ -14,3 +14,7 @@ Types of changes:
 - Added `HDFS` dependencies to support REST catalog above `HDFS` storage.
 - Changed `rest-fixture` logs library to `logback`.
 - Added logs to REST catalog in `CatalogHandlers.java`.
+
+## 26/05/2026
+
+- Added option to set overrides and defaults in Rest catalog's `/v1/config` endpoint
