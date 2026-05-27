@@ -123,6 +123,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.junitpioneer.jupiter.SetEnvironmentVariable;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
@@ -410,6 +411,33 @@ public class TestRESTCatalog extends CatalogTests<RESTCatalog> {
   }
 
   /* RESTCatalog specific tests */
+
+  @Test
+  @SetEnvironmentVariable(key = "REST_CATALOG_CONFIG_OVERRIDE_A_B__C_D", value = "override-value")
+  @SetEnvironmentVariable(key = "REST_CATALOG_CONFIG_DEFAULT_E__F_G__H", value = "default-value")
+  public void testConfigEnvVarMapping() throws IOException {
+    RESTCatalogAdapter adapter = new RESTCatalogAdapter(backendCatalog);
+
+    RESTCatalog catalog =
+        new RESTCatalog(SessionCatalog.SessionContext.createEmpty(), (config) -> adapter);
+    catalog.initialize(
+        "prod",
+        ImmutableMap.of(
+            CatalogProperties.URI,
+            "ignored",
+            CatalogProperties.FILE_IO_IMPL,
+            "org.apache.iceberg.inmemory.InMemoryFileIO"));
+
+    assertThat(catalog.properties())
+        .as("REST_CATALOG_CONFIG_OVERRIDE_A_B__C_D should map to override key a.b-c.d")
+        .containsEntry("a.b-c.d", "override-value");
+
+    assertThat(catalog.properties())
+        .as("REST_CATALOG_CONFIG_DEFAULT_E__F_G__H should map to default key e-f.g-h")
+        .containsEntry("e-f.g-h", "default-value");
+
+    catalog.close();
+  }
 
   @Test
   public void testConfigRoute() throws IOException {

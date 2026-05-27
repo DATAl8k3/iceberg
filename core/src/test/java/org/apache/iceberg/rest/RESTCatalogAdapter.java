@@ -195,7 +195,7 @@ public class RESTCatalogAdapter extends BaseHTTPClient {
         return castResponse(responseType, handleOAuthRequest(body));
 
       case CONFIG:
-        List<Map.Entry<String, String>> env_map = filterAndStrip(System.getenv().entrySet(), "REST_CATALOG_CONFIG_").toList();
+        List<Map.Entry<String, String>> envMap = filterAndStrip(System.getenv().entrySet(), "REST_CATALOG_CONFIG_").toList();
         return castResponse(
             responseType,
             ConfigResponse.builder()
@@ -205,8 +205,8 @@ public class RESTCatalogAdapter extends BaseHTTPClient {
                         .collect(Collectors.toList()))
                 .withOverride(
                     RESTCatalogProperties.NAMESPACE_SEPARATOR, NAMESPACE_SEPARATOR_URLENCODED_UTF_8)
-                .withOverrides(convertEnvToConfMap(filterAndStrip(env_map, "OVERRIDE_")))
-                .withDefaults(convertEnvToConfMap(filterAndStrip(env_map, "DEFAULT_")))
+                .withOverrides(convertEnvToConfMap(filterAndStrip(envMap, "OVERRIDE_")))
+                .withDefaults(convertEnvToConfMap(filterAndStrip(envMap, "DEFAULT_")))
                 .build());
 
       case LIST_NAMESPACES:
